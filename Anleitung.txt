@@ -1,0 +1,12 @@
+# local speichern:
+
+cd Ordner
+
+npm install
+npm run dev
+
+# copy
+git clone -b claude/market-offers-frontend-Ht93e https://github.com/jonaswolff-creator/Applikation.git
+cd Applikation
+npm install
+npm run dev
