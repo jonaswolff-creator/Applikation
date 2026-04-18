@@ -1,0 +1,2 @@
+# Applikation
+Applikation für DealFinder
