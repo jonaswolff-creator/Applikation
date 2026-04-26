@@ -197,43 +197,79 @@ export function App() {
               Die besten Deals <span className="hero__title-accent">in deiner Umgebung</span>
             </h1>
             <p className="hero__lead">
-              {heroStats.activeOffers} Angebote in einem {radiusKm}-km-Umkreis um{" "}
-              <button
-                type="button"
-                className="hero__location-link"
-                onClick={() => setLocatorOpen(true)}
-              >
-                {location.label}
-              </button>
-              . Sieh auf einen Blick, wie lange ein Angebot noch gilt — und ob der Preis
-              wirklich ein Schnäppchen ist.
+              {searching ? (
+                <>
+                  Wir durchsuchen alle Märkte im {radiusKm}-km-Umkreis um{" "}
+                  <button
+                    type="button"
+                    className="hero__location-link"
+                    onClick={() => setLocatorOpen(true)}
+                  >
+                    {location.label}
+                  </button>
+                  . Gleich siehst du, was sich heute lohnt.
+                </>
+              ) : (
+                <>
+                  {heroStats.activeOffers} Angebote in einem {radiusKm}-km-Umkreis um{" "}
+                  <button
+                    type="button"
+                    className="hero__location-link"
+                    onClick={() => setLocatorOpen(true)}
+                  >
+                    {location.label}
+                  </button>
+                  . Sieh auf einen Blick, wie lange ein Angebot noch gilt — und ob der
+                  Preis wirklich ein Schnäppchen ist.
+                </>
+              )}
             </p>
           </div>
           <aside className="hero__stats" aria-label="Überblick">
-            <div className="hero__stat">
-              <div className="hero__stat-value">{heroStats.activeOffers}</div>
-              <div className="hero__stat-label">aktive Angebote im Umkreis</div>
-            </div>
-            <div className="hero__stat">
-              <div className="hero__stat-value">{euro(heroStats.totalSavings)}</div>
-              <div className="hero__stat-label">mögliche Ersparnis</div>
-            </div>
-            <button
-              type="button"
-              className="hero__highlight"
-              onClick={() => setActive(heroStats.best)}
-              style={{
-                background: `linear-gradient(135deg, ${heroStats.best.accent}, ${heroStats.best.accent}cc)`,
-              }}
-            >
-              <span className="hero__highlight-label">Top-Deal</span>
-              <span className="hero__highlight-title">
-                {heroStats.best.emoji} {heroStats.best.title}
-              </span>
-              <span className="hero__highlight-savings">
-                −{Math.round(savingsPercent(heroStats.best.regularPrice, heroStats.best.price) * 100)}% heute
-              </span>
-            </button>
+            {searching ? (
+              <>
+                <div className="hero__stat hero__stat--skeleton">
+                  <div className="skeleton skeleton--lg" />
+                  <div className="skeleton skeleton--sm" />
+                </div>
+                <div className="hero__stat hero__stat--skeleton">
+                  <div className="skeleton skeleton--lg" />
+                  <div className="skeleton skeleton--sm" />
+                </div>
+                <div className="hero__highlight hero__highlight--skeleton">
+                  <div className="skeleton skeleton--xs" />
+                  <div className="skeleton skeleton--md" />
+                  <div className="skeleton skeleton--sm" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="hero__stat">
+                  <div className="hero__stat-value">{heroStats.activeOffers}</div>
+                  <div className="hero__stat-label">aktive Angebote im Umkreis</div>
+                </div>
+                <div className="hero__stat">
+                  <div className="hero__stat-value">{euro(heroStats.totalSavings)}</div>
+                  <div className="hero__stat-label">mögliche Ersparnis</div>
+                </div>
+                <button
+                  type="button"
+                  className="hero__highlight"
+                  onClick={() => setActive(heroStats.best)}
+                  style={{
+                    background: `linear-gradient(135deg, ${heroStats.best.accent}, ${heroStats.best.accent}cc)`,
+                  }}
+                >
+                  <span className="hero__highlight-label">Top-Deal</span>
+                  <span className="hero__highlight-title">
+                    {heroStats.best.emoji} {heroStats.best.title}
+                  </span>
+                  <span className="hero__highlight-savings">
+                    −{Math.round(savingsPercent(heroStats.best.regularPrice, heroStats.best.price) * 100)}% heute
+                  </span>
+                </button>
+              </>
+            )}
           </aside>
         </div>
       </section>

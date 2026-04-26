@@ -731,6 +731,46 @@ button {
   50% { opacity: 0.45; }
 }
 
+/* ============ SKELETONS ============ */
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    color-mix(in srgb, var(--surface-muted) 50%, white) 50%,
+    var(--surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite ease-in-out;
+}
+
+.skeleton--xs { height: 10px; width: 40%; }
+.skeleton--sm { height: 14px; width: 70%; }
+.skeleton--md { height: 18px; width: 80%; }
+.skeleton--lg { height: 30px; width: 60%; }
+
+.hero__stat--skeleton,
+.hero__highlight--skeleton {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  cursor: default;
+  color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero__highlight--skeleton {
+  grid-column: 1 / -1;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ============ SEARCHING ============ */
 .searching {
   text-align: center;
