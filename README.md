@@ -4,6 +4,11 @@ Frontend für eine regionale Angebots-App, gebaut mit
 **Vite + React + TypeScript**. Kein Backend — alle Daten sind als Mock-Daten
 eingebaut, damit der Fokus auf dem Frontend liegt.
 
+
+## Link
+
+https://applikation.vercel.app
+
 ## Features
 
 - 🔎 **Suche & Filter** nach Stadt, Kategorie und Text
