@@ -142,11 +142,25 @@ export function AiBot({ offers, location, radiusKm }: Props) {
           </div>
 
           <div className="bot__suggest">
-            {SUGGESTIONS.map((s) => (
-              <button key={s} type="button" className="bot__suggest-chip" onClick={() => ask(s)}>
-                {s}
-              </button>
-            ))}
+            <div
+              className="bot__suggest-track"
+              onWheel={(e) => {
+                if (e.deltaY !== 0) {
+                  e.currentTarget.scrollLeft += e.deltaY;
+                }
+              }}
+            >
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className="bot__suggest-chip"
+                  onClick={() => ask(s)}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
           <form

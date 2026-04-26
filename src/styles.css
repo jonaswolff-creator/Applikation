@@ -1884,20 +1884,57 @@ button {
 }
 
 .bot__suggest {
-  display: flex;
-  gap: 6px;
-  padding: 8px 12px;
+  position: relative;
   border-top: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
-.bot__suggest::-webkit-scrollbar {
-  display: none;
+.bot__suggest::before,
+.bot__suggest::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bot__suggest::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--surface), transparent);
+}
+
+.bot__suggest::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--surface), transparent);
+}
+
+.bot__suggest-track {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.bot__suggest-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bot__suggest-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bot__suggest-track::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
 }
 
 .bot__suggest-chip {
   flex-shrink: 0;
+  white-space: nowrap;
   background: var(--surface-muted);
   border: 1px solid transparent;
   color: var(--text);
