@@ -1,6 +1,6 @@
 # Marktfinder
 
-Frontend für eine regionale Angebots-App (ähnlich idealo/marktguru), gebaut mit
+Frontend für eine regionale Angebots-App, gebaut mit
 **Vite + React + TypeScript**. Kein Backend — alle Daten sind als Mock-Daten
 eingebaut, damit der Fokus auf dem Frontend liegt.
 
