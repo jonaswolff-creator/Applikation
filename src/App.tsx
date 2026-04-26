@@ -94,6 +94,7 @@ export function App() {
   const [sort, setSort] = useState<SortKey>("relevance");
   const [active, setActive] = useState<Offer | null>(null);
   const [locatorOpen, setLocatorOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   const { saved, toggle } = useSaved();
   const [{ loc: location, radiusKm }, setLocState] = useLocation();
@@ -247,7 +248,9 @@ export function App() {
           totalResults={filtered.length}
         />
 
-        {filtered.length === 0 ? (
+        {searching ? (
+          <SearchingState location={location.label} radiusKm={radiusKm} />
+        ) : filtered.length === 0 ? (
           <div className="empty">
             <div className="empty__emoji">🔍</div>
             <h2>Keine Angebote in diesem Umkreis</h2>
@@ -308,11 +311,91 @@ export function App() {
           onConfirm={(loc, r) => {
             setLocState({ loc, radiusKm: r });
             setLocatorOpen(false);
+            setSearching(true);
+            window.setTimeout(() => setSearching(false), 5000);
           }}
         />
       )}
 
       <AiBot offers={OFFERS} location={location} radiusKm={radiusKm} />
+    </div>
+  );
+}
+
+const SEARCH_STEPS = [
+  "Verbinde mit Märkten…",
+  "Lese aktuelle Prospekte…",
+  "Vergleiche Preise…",
+  "Sortiere nach Relevanz…",
+];
+
+function SearchingState({ location, radiusKm }: { location: string; radiusKm: number }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setStep((s) => Math.min(s + 1, SEARCH_STEPS.length - 1));
+    }, 1100);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div className="searching" role="status" aria-live="polite">
+      <div className="searching__spinner" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="64" height="64">
+          <circle
+            cx="32"
+            cy="32"
+            r="26"
+            fill="none"
+            stroke="var(--accent-soft)"
+            strokeWidth="6"
+          />
+          <circle
+            cx="32"
+            cy="32"
+            r="26"
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray="60 200"
+            transform="rotate(-90 32 32)"
+          >
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="-90 32 32"
+              to="270 32 32"
+              dur="1s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </svg>
+      </div>
+      <h2 className="searching__title">Angebote werden gesucht…</h2>
+      <p className="searching__sub">
+        Im {radiusKm}-km-Umkreis um <strong>{location}</strong>
+      </p>
+      <ul className="searching__steps">
+        {SEARCH_STEPS.map((label, i) => (
+          <li
+            key={label}
+            className={
+              i < step
+                ? "searching__step searching__step--done"
+                : i === step
+                  ? "searching__step searching__step--active"
+                  : "searching__step"
+            }
+          >
+            <span className="searching__step-mark" aria-hidden="true">
+              {i < step ? "✓" : i === step ? "•" : ""}
+            </span>
+            <span>{label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
