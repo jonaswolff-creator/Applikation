@@ -12,6 +12,7 @@ import { StoreBadge } from "./StoreBadge";
 
 interface Props {
   offer: Offer;
+  distanceKm: number;
   onClose: () => void;
   saved: boolean;
   onToggleSave: (id: string) => void;
@@ -21,6 +22,7 @@ interface Props {
 
 export function OfferDetail({
   offer,
+  distanceKm,
   onClose,
   saved,
   onToggleSave,
@@ -73,7 +75,7 @@ export function OfferDetail({
             <StoreBadge store={offer.store} size="md" />
             <h2 className="sheet__title">{offer.title}</h2>
             <p className="sheet__subtitle">
-              {offer.subtitle} · <span>{offer.city}</span> · {offer.distanceKm.toFixed(1)} km
+              {offer.subtitle} · <span>{offer.city}</span> · {distanceKm.toFixed(1)} km
             </p>
             <div className="sheet__tags">
               {offer.tags.map((t) => (

@@ -1,14 +1,21 @@
 import type { ChangeEvent } from "react";
+import type { UserLocation } from "../types";
 
 interface Props {
   query: string;
   onQueryChange: (value: string) => void;
-  city: string;
-  onCityChange: (value: string) => void;
-  cities: string[];
+  location: UserLocation;
+  radiusKm: number;
+  onOpenLocator: () => void;
 }
 
-export function Header({ query, onQueryChange, city, onCityChange, cities }: Props) {
+export function Header({
+  query,
+  onQueryChange,
+  location,
+  radiusKm,
+  onOpenLocator,
+}: Props) {
   return (
     <header className="site-header">
       <div className="site-header__inner">
@@ -61,20 +68,19 @@ export function Header({ query, onQueryChange, city, onCityChange, cities }: Pro
             )}
           </label>
 
-          <label className="search__field search__field--city">
+          <button
+            type="button"
+            className="search__field search__field--locator"
+            onClick={onOpenLocator}
+            aria-label="Standort und Radius wählen"
+          >
             <PinIcon />
-            <select
-              value={city}
-              onChange={(e: ChangeEvent<HTMLSelectElement>) => onCityChange(e.target.value)}
-              aria-label="Stadt oder Region wählen"
-            >
-              {cities.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
+            <span className="search__locator-text">
+              <span className="search__locator-label">{location.label}</span>
+              <span className="search__locator-radius">Radius {radiusKm} km</span>
+            </span>
+            <ChevronIcon />
+          </button>
         </div>
 
         <nav className="nav" aria-label="Hauptnavigation">
@@ -106,6 +112,14 @@ function PinIcon() {
         strokeWidth="1.8"
       />
       <circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
