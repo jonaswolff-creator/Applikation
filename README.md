@@ -1,4 +1,4 @@
-# Marktfinder
+# Marktfinder (Von Justin Hornberger und Jonas Wolff)
 
 Frontend für eine regionale Angebots-App, gebaut mit
 **Vite + React + TypeScript**. Kein Backend — alle Daten sind als Mock-Daten
@@ -59,3 +59,5 @@ src/
 Alle Angebote sind statische Beispiele — beim Anbinden einer echten API reicht
 es, `src/data/offers.ts` durch einen Fetch-Call zu ersetzen, der `Offer[]`
 zurückgibt.
+
+
