@@ -5,12 +5,13 @@ import { StoreBadge } from "./StoreBadge";
 
 interface Props {
   offer: Offer;
+  distanceKm: number;
   onOpen: (offer: Offer) => void;
   saved: boolean;
   onToggleSave: (id: string) => void;
 }
 
-export function OfferCard({ offer, onOpen, saved, onToggleSave }: Props) {
+export function OfferCard({ offer, distanceKm, onOpen, saved, onToggleSave }: Props) {
   const savings = savingsPercent(offer.regularPrice, offer.price);
   const pct = Math.round(savings * 100);
 
@@ -56,7 +57,7 @@ export function OfferCard({ offer, onOpen, saved, onToggleSave }: Props) {
       <div className="card__body">
         <div className="card__head">
           <StoreBadge store={offer.store} />
-          <span className="card__distance">{offer.distanceKm.toFixed(1)} km</span>
+          <span className="card__distance">{distanceKm.toFixed(1)} km</span>
         </div>
 
         <h3 className="card__title">{offer.title}</h3>

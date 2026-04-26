@@ -28,7 +28,8 @@ export interface Offer {
   category: Category;
   store: Store;
   city: string;
-  distanceKm: number;
+  lat: number;
+  lng: number;
   emoji: string;
   accent: string;
   regularPrice: number;
@@ -48,4 +49,10 @@ export interface Offer {
   pastCampaigns: number;
   tags: string[];
   description: string;
+}
+
+export interface UserLocation {
+  lat: number;
+  lng: number;
+  label: string;
 }

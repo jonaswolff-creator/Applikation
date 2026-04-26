@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import { AiBot } from "./components/AiBot";
 import { FilterBar, type SortKey } from "./components/FilterBar";
 import { Header } from "./components/Header";
+import { LocationPicker } from "./components/LocationPicker";
 import { OfferCard } from "./components/OfferCard";
 import { OfferDetail } from "./components/OfferDetail";
 import { OFFERS } from "./data/offers";
-import type { Category, Offer } from "./types";
+import type { Category, Offer, UserLocation } from "./types";
 import { euro, savingsPercent } from "./utils/format";
+import { haversineKm } from "./utils/geo";
 
 const ALL_CATEGORIES: (Category | "Alle")[] = [
   "Alle",
@@ -20,6 +23,18 @@ const ALL_CATEGORIES: (Category | "Alle")[] = [
 ];
 
 const STORAGE_KEY = "marktfinder.saved";
+const LOC_STORAGE_KEY = "marktfinder.location";
+
+const DEFAULT_LOCATION: UserLocation = {
+  lat: 52.5200,
+  lng: 13.4050,
+  label: "Berlin Mitte",
+};
+
+interface PersistedLoc {
+  loc: UserLocation;
+  radiusKm: number;
+}
 
 function useSaved() {
   const [saved, setSaved] = useState<Set<string>>(() => {
@@ -51,27 +66,52 @@ function useSaved() {
   return { saved, toggle };
 }
 
+function useLocation() {
+  const [state, setState] = useState<PersistedLoc>(() => {
+    try {
+      const raw = localStorage.getItem(LOC_STORAGE_KEY);
+      if (raw) return JSON.parse(raw) as PersistedLoc;
+    } catch {
+      /* ignore */
+    }
+    return { loc: DEFAULT_LOCATION, radiusKm: 5 };
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore */
+    }
+  }, [state]);
+
+  return [state, setState] as const;
+}
+
 export function App() {
   const [query, setQuery] = useState("");
-  const [city, setCity] = useState("Berlin");
   const [category, setCategory] = useState<Category | "Alle">("Alle");
   const [sort, setSort] = useState<SortKey>("relevance");
   const [active, setActive] = useState<Offer | null>(null);
+  const [locatorOpen, setLocatorOpen] = useState(false);
 
   const { saved, toggle } = useSaved();
+  const [{ loc: location, radiusKm }, setLocState] = useLocation();
 
-  const cities = useMemo(() => {
-    const set = new Set<string>();
-    set.add("Berlin");
-    OFFERS.forEach((o) => set.add(o.city.split(" ·")[0]!));
-    return Array.from(set);
-  }, []);
+  const offersWithDistance = useMemo(
+    () =>
+      OFFERS.map((o) => ({
+        offer: o,
+        distanceKm: haversineKm(location, { lat: o.lat, lng: o.lng }),
+      })),
+    [location],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const result = OFFERS.filter((o) => {
+    const result = offersWithDistance.filter(({ offer: o, distanceKm }) => {
+      if (distanceKm > radiusKm) return false;
       if (category !== "Alle" && o.category !== category) return false;
-      if (city && !o.city.toLowerCase().includes(city.toLowerCase())) return false;
       if (!q) return true;
       return [o.title, o.subtitle, o.description, o.store.name, ...o.tags]
         .join(" ")
@@ -84,44 +124,52 @@ export function App() {
       case "discount":
         sorted.sort(
           (a, b) =>
-            savingsPercent(b.regularPrice, b.price) -
-            savingsPercent(a.regularPrice, a.price),
+            savingsPercent(b.offer.regularPrice, b.offer.price) -
+            savingsPercent(a.offer.regularPrice, a.offer.price),
         );
         break;
       case "endingSoon":
         sorted.sort(
-          (a, b) => new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime(),
+          (a, b) =>
+            new Date(a.offer.endsAt).getTime() - new Date(b.offer.endsAt).getTime(),
         );
         break;
       case "priceAsc":
-        sorted.sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => a.offer.price - b.offer.price);
         break;
       case "priceDesc":
-        sorted.sort((a, b) => b.price - a.price);
+        sorted.sort((a, b) => b.offer.price - a.offer.price);
         break;
       case "relevance":
       default:
-        sorted.sort((a, b) => b.views24h - a.views24h);
+        sorted.sort((a, b) => b.offer.views24h - a.offer.views24h);
     }
     return sorted;
-  }, [query, city, category, sort]);
+  }, [offersWithDistance, query, category, sort, radiusKm]);
 
   const heroStats = useMemo(() => {
-    const best = [...OFFERS].sort(
+    const inRange = offersWithDistance.filter((x) => x.distanceKm <= radiusKm);
+    const pool = inRange.length > 0 ? inRange : offersWithDistance;
+    const best = [...pool].sort(
       (a, b) =>
-        savingsPercent(b.regularPrice, b.price) -
-        savingsPercent(a.regularPrice, a.price),
+        savingsPercent(b.offer.regularPrice, b.offer.price) -
+        savingsPercent(a.offer.regularPrice, a.offer.price),
     )[0]!;
-    const totalSavings = OFFERS.reduce(
-      (acc, o) => acc + (o.regularPrice - o.price),
+    const totalSavings = inRange.reduce(
+      (acc, x) => acc + (x.offer.regularPrice - x.offer.price),
       0,
     );
     return {
-      best,
+      best: best.offer,
       totalSavings,
-      activeOffers: OFFERS.length,
+      activeOffers: inRange.length,
     };
-  }, []);
+  }, [offersWithDistance, radiusKm]);
+
+  const activeDistance = useMemo(() => {
+    if (!active) return 0;
+    return haversineKm(location, { lat: active.lat, lng: active.lng });
+  }, [active, location]);
 
   const similar = useMemo(() => {
     if (!active) return [];
@@ -135,9 +183,9 @@ export function App() {
       <Header
         query={query}
         onQueryChange={setQuery}
-        city={city}
-        onCityChange={setCity}
-        cities={cities}
+        location={location}
+        radiusKm={radiusKm}
+        onOpenLocator={() => setLocatorOpen(true)}
       />
 
       <section className="hero">
@@ -148,14 +196,22 @@ export function App() {
               Die besten Deals <span className="hero__title-accent">in deiner Umgebung</span>
             </h1>
             <p className="hero__lead">
-              Vergleiche Prospekte von über 20 Märkten in {city}. Sieh auf einen Blick, wie
-              lange ein Angebot noch gilt — und ob der Preis wirklich ein Schnäppchen ist.
+              {heroStats.activeOffers} Angebote in einem {radiusKm}-km-Umkreis um{" "}
+              <button
+                type="button"
+                className="hero__location-link"
+                onClick={() => setLocatorOpen(true)}
+              >
+                {location.label}
+              </button>
+              . Sieh auf einen Blick, wie lange ein Angebot noch gilt — und ob der Preis
+              wirklich ein Schnäppchen ist.
             </p>
           </div>
           <aside className="hero__stats" aria-label="Überblick">
             <div className="hero__stat">
               <div className="hero__stat-value">{heroStats.activeOffers}</div>
-              <div className="hero__stat-label">aktive Angebote</div>
+              <div className="hero__stat-label">aktive Angebote im Umkreis</div>
             </div>
             <div className="hero__stat">
               <div className="hero__stat-value">{euro(heroStats.totalSavings)}</div>
@@ -194,15 +250,26 @@ export function App() {
         {filtered.length === 0 ? (
           <div className="empty">
             <div className="empty__emoji">🔍</div>
-            <h2>Keine Angebote gefunden</h2>
-            <p>Versuche es mit einem anderen Suchbegriff oder wähle eine andere Kategorie.</p>
+            <h2>Keine Angebote in diesem Umkreis</h2>
+            <p>
+              Erweitere deinen Suchradius über das Standort-Menü oben oder ändere die
+              Filter.
+            </p>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setLocatorOpen(true)}
+            >
+              Standort & Radius ändern
+            </button>
           </div>
         ) : (
           <div className="grid">
-            {filtered.map((o) => (
+            {filtered.map(({ offer: o, distanceKm }) => (
               <OfferCard
                 key={o.id}
                 offer={o}
+                distanceKm={distanceKm}
                 onOpen={setActive}
                 saved={saved.has(o.id)}
                 onToggleSave={toggle}
@@ -224,6 +291,7 @@ export function App() {
       {active && (
         <OfferDetail
           offer={active}
+          distanceKm={activeDistance}
           onClose={() => setActive(null)}
           saved={saved.has(active.id)}
           onToggleSave={toggle}
@@ -231,6 +299,20 @@ export function App() {
           onOpenSimilar={setActive}
         />
       )}
+
+      {locatorOpen && (
+        <LocationPicker
+          location={location}
+          radiusKm={radiusKm}
+          onClose={() => setLocatorOpen(false)}
+          onConfirm={(loc, r) => {
+            setLocState({ loc, radiusKm: r });
+            setLocatorOpen(false);
+          }}
+        />
+      )}
+
+      <AiBot offers={OFFERS} location={location} radiusKm={radiusKm} />
     </div>
   );
 }
