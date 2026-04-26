@@ -44,7 +44,7 @@ src/
 ├── main.tsx                React-Entry
 ├── styles.css              Design-System (CSS Custom Properties)
 ├── types.ts                Offer / Store / PricePoint Types
-├── data/offers.ts          Mock-Angebote (12 Stück)
+├── data/offers.ts          Mock-Angebote 
 ├── utils/format.ts         Formatter (EUR, Datum, Countdown)
 └── components/
     ├── Header.tsx          Suche + Stadt + Navigation
