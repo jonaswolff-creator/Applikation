@@ -167,13 +167,6 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
               <div className="user-menu__hmail">{user.email}</div>
             </div>
           </div>
-          <button type="button" className="user-menu__item" disabled>
-            Profil verwalten
-          </button>
-          <button type="button" className="user-menu__item" disabled>
-            Einstellungen
-          </button>
-          <hr className="user-menu__sep" />
           <button
             type="button"
             className="user-menu__item user-menu__item--danger"
