@@ -3,10 +3,11 @@ import { AiBot } from "./components/AiBot";
 import { FilterBar, type SortKey } from "./components/FilterBar";
 import { Header } from "./components/Header";
 import { LocationPicker } from "./components/LocationPicker";
+import { LoginModal } from "./components/LoginModal";
 import { OfferCard } from "./components/OfferCard";
 import { OfferDetail } from "./components/OfferDetail";
 import { OFFERS } from "./data/offers";
-import type { Category, Offer, UserLocation } from "./types";
+import type { Category, Offer, User, UserLocation } from "./types";
 import { euro, savingsPercent } from "./utils/format";
 import { haversineKm } from "./utils/geo";
 
@@ -24,6 +25,7 @@ const ALL_CATEGORIES: (Category | "Alle")[] = [
 
 const STORAGE_KEY = "marktfinder.saved";
 const LOC_STORAGE_KEY = "marktfinder.location";
+const USER_STORAGE_KEY = "marktfinder.user";
 
 const DEFAULT_LOCATION: UserLocation = {
   lat: 52.5200,
@@ -66,6 +68,28 @@ function useSaved() {
   return { saved, toggle };
 }
 
+function useUser() {
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const raw = localStorage.getItem(USER_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as User) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (user) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      else localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [user]);
+
+  return [user, setUser] as const;
+}
+
 function useLocation() {
   const [state, setState] = useState<PersistedLoc>(() => {
     try {
@@ -94,10 +118,12 @@ export function App() {
   const [sort, setSort] = useState<SortKey>("relevance");
   const [active, setActive] = useState<Offer | null>(null);
   const [locatorOpen, setLocatorOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [searching, setSearching] = useState(false);
 
   const { saved, toggle } = useSaved();
   const [{ loc: location, radiusKm }, setLocState] = useLocation();
+  const [user, setUser] = useUser();
 
   const offersWithDistance = useMemo(
     () =>
@@ -187,6 +213,9 @@ export function App() {
         location={location}
         radiusKm={radiusKm}
         onOpenLocator={() => setLocatorOpen(true)}
+        user={user}
+        onLogin={() => setLoginOpen(true)}
+        onLogout={() => setUser(null)}
       />
 
       <section className="hero">
@@ -349,6 +378,16 @@ export function App() {
             setLocatorOpen(false);
             setSearching(true);
             window.setTimeout(() => setSearching(false), 5000);
+          }}
+        />
+      )}
+
+      {loginOpen && (
+        <LoginModal
+          onClose={() => setLoginOpen(false)}
+          onSubmit={(u) => {
+            setUser(u);
+            setLoginOpen(false);
           }}
         />
       )}

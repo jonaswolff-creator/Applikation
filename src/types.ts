@@ -56,3 +56,10 @@ export interface UserLocation {
   lng: number;
   label: string;
 }
+
+export interface User {
+  name: string;
+  email: string;
+  /** ISO timestamp when the (fake) session was created */
+  signedInAt: string;
+}
