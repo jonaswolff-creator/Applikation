@@ -120,6 +120,7 @@ export function App() {
   const [locatorOpen, setLocatorOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const { saved, toggle } = useSaved();
   const [{ loc: location, radiusKm }, setLocState] = useLocation();
@@ -137,7 +138,11 @@ export function App() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const result = offersWithDistance.filter(({ offer: o, distanceKm }) => {
-      if (distanceKm > radiusKm) return false;
+      if (favoritesOnly) {
+        if (!saved.has(o.id)) return false;
+      } else if (distanceKm > radiusKm) {
+        return false;
+      }
       if (category !== "Alle" && o.category !== category) return false;
       if (!q) return true;
       return [o.title, o.subtitle, o.description, o.store.name, ...o.tags]
@@ -172,7 +177,7 @@ export function App() {
         sorted.sort((a, b) => b.offer.views24h - a.offer.views24h);
     }
     return sorted;
-  }, [offersWithDistance, query, category, sort, radiusKm]);
+  }, [offersWithDistance, query, category, sort, radiusKm, favoritesOnly, saved]);
 
   const heroStats = useMemo(() => {
     const inRange = offersWithDistance.filter((x) => x.distanceKm <= radiusKm);
@@ -216,6 +221,9 @@ export function App() {
         user={user}
         onLogin={() => setLoginOpen(true)}
         onLogout={() => setUser(null)}
+        favoritesOnly={favoritesOnly}
+        onToggleFavorites={() => setFavoritesOnly((v) => !v)}
+        favoritesCount={saved.size}
       />
 
       <section className="hero">
@@ -223,10 +231,26 @@ export function App() {
           <div className="hero__text">
             <span className="hero__eyebrow">Regionale Angebote · heute aktualisiert</span>
             <h1 className="hero__title">
-              Die besten Deals <span className="hero__title-accent">in deiner Umgebung</span>
+              {favoritesOnly ? (
+                <>
+                  Deine{" "}
+                  <span className="hero__title-accent">gemerkten Angebote</span>
+                </>
+              ) : (
+                <>
+                  Die besten Deals{" "}
+                  <span className="hero__title-accent">in deiner Umgebung</span>
+                </>
+              )}
             </h1>
             <p className="hero__lead">
-              {searching ? (
+              {favoritesOnly ? (
+                <>
+                  {saved.size === 0
+                    ? "Noch keine Favoriten gespeichert. Tippe bei einem Angebot auf das Herz, um es hier abzulegen."
+                    : `${saved.size} ${saved.size === 1 ? "Angebot" : "Angebote"} in deiner Merkliste — egal in welcher Stadt.`}
+                </>
+              ) : searching ? (
                 <>
                   Wir durchsuchen alle Märkte im {radiusKm}-km-Umkreis um{" "}
                   <button
@@ -315,20 +339,36 @@ export function App() {
 
         {searching ? (
           <SearchingState location={location.label} radiusKm={radiusKm} />
-        ) : filtered.length === 0 ? (
+        ) : favoritesOnly && saved.size === 0 ? (
           <div className="empty">
-            <div className="empty__emoji">🔍</div>
-            <h2>Keine Angebote in diesem Umkreis</h2>
+            <div className="empty__emoji">💛</div>
+            <h2>Noch keine Favoriten</h2>
             <p>
-              Erweitere deinen Suchradius über das Standort-Menü oben oder ändere die
-              Filter.
+              Tippe bei einem Angebot auf das Herz, um es hier zu speichern.
             </p>
             <button
               type="button"
               className="btn btn--ghost"
-              onClick={() => setLocatorOpen(true)}
+              onClick={() => setFavoritesOnly(false)}
             >
-              Standort & Radius ändern
+              Zurück zu allen Angeboten
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty">
+            <div className="empty__emoji">🔍</div>
+            <h2>{favoritesOnly ? "Keine Favoriten passen zum Filter" : "Keine Angebote in diesem Umkreis"}</h2>
+            <p>
+              {favoritesOnly
+                ? "Setze Kategorie/Suche zurück oder verlasse den Favoriten-Modus."
+                : "Erweitere deinen Suchradius über das Standort-Menü oben oder ändere die Filter."}
+            </p>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => (favoritesOnly ? setFavoritesOnly(false) : setLocatorOpen(true))}
+            >
+              {favoritesOnly ? "Favoriten-Filter aus" : "Standort & Radius ändern"}
             </button>
           </div>
         ) : (
