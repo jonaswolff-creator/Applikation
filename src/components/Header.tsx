@@ -10,6 +10,9 @@ interface Props {
   user: User | null;
   onLogin: () => void;
   onLogout: () => void;
+  favoritesOnly: boolean;
+  onToggleFavorites: () => void;
+  favoritesCount: number;
 }
 
 export function Header({
@@ -21,6 +24,9 @@ export function Header({
   user,
   onLogin,
   onLogout,
+  favoritesOnly,
+  onToggleFavorites,
+  favoritesCount,
 }: Props) {
   return (
     <header className="site-header">
@@ -90,8 +96,18 @@ export function Header({
         </div>
 
         <nav className="nav" aria-label="Hauptnavigation">
-          <a href="#" className="nav__link">Prospekte</a>
-          <a href="#" className="nav__link">Favoriten</a>
+          <button
+            type="button"
+            className={`nav__link nav__fav ${favoritesOnly ? "nav__fav--active" : ""}`}
+            onClick={onToggleFavorites}
+            aria-pressed={favoritesOnly}
+          >
+            <HeartIcon filled={favoritesOnly} />
+            Favoriten
+            {favoritesCount > 0 && (
+              <span className="nav__fav-badge">{favoritesCount}</span>
+            )}
+          </button>
           {user ? (
             <UserMenu user={user} onLogout={onLogout} />
           ) : (
@@ -210,6 +226,20 @@ function ChevronIcon() {
   return (
     <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
       <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.7A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
