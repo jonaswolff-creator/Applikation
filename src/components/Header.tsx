@@ -1,5 +1,5 @@
-import type { ChangeEvent } from "react";
-import type { UserLocation } from "../types";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import type { User, UserLocation } from "../types";
 
 interface Props {
   query: string;
@@ -7,6 +7,9 @@ interface Props {
   location: UserLocation;
   radiusKm: number;
   onOpenLocator: () => void;
+  user: User | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }
 
 export function Header({
@@ -15,6 +18,9 @@ export function Header({
   location,
   radiusKm,
   onOpenLocator,
+  user,
+  onLogin,
+  onLogout,
 }: Props) {
   return (
     <header className="site-header">
@@ -86,10 +92,101 @@ export function Header({
         <nav className="nav" aria-label="Hauptnavigation">
           <a href="#" className="nav__link">Prospekte</a>
           <a href="#" className="nav__link">Favoriten</a>
-          <a href="#" className="nav__link nav__link--cta">Einloggen</a>
+          {user ? (
+            <UserMenu user={user} onLogout={onLogout} />
+          ) : (
+            <button type="button" className="nav__link nav__link--cta" onClick={onLogin}>
+              Einloggen
+            </button>
+          )}
         </nav>
       </div>
     </header>
+  );
+}
+
+function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const initials = user.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
+
+  return (
+    <div className="user-menu" ref={ref}>
+      <button
+        type="button"
+        className="user-menu__trigger"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Konto-Menü"
+      >
+        <span className="user-menu__avatar">{initials || "🙂"}</span>
+        <span className="user-menu__name">{user.name}</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <path
+            d="M6 9l6 6 6-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div className="user-menu__panel" role="menu">
+          <div className="user-menu__head">
+            <span className="user-menu__avatar user-menu__avatar--lg">
+              {initials || "🙂"}
+            </span>
+            <div>
+              <div className="user-menu__hname">{user.name}</div>
+              <div className="user-menu__hmail">{user.email}</div>
+            </div>
+          </div>
+          <button type="button" className="user-menu__item" disabled>
+            Profil verwalten
+          </button>
+          <button type="button" className="user-menu__item" disabled>
+            Einstellungen
+          </button>
+          <hr className="user-menu__sep" />
+          <button
+            type="button"
+            className="user-menu__item user-menu__item--danger"
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
+          >
+            Abmelden
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
